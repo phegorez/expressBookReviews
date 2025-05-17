@@ -5,39 +5,97 @@ let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
 
-public_users.post("/register", (req,res) => {
+public_users.post("/register", (req, res) => {
   //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  const { username, password } = req.body;
+  // Check if username is valid
+  if (!isValid(username) === 'valid') {
+    return res.status(400).json({ message: isValid(username) });
+  }
+  // Check if username already exists
+  const existingUser = users.find(user => user.username === username);
+  if (existingUser) {
+    return res.status(400).json({ message: "Username already exists" });
+  }
+  // Add new user to the users array
+  users.push({ username, password });
+  return res.status(200).json({ message: "User registered successfully" });
 });
 
 // Get the book list available in the shop
-public_users.get('/',function (req, res) {
+public_users.get('/', function (req, res) {
   //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  let bookList = Object.values(books);
+  try {
+    return res.status(300).json({ bookList });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
+public_users.get('/isbn/:isbn', function (req, res) {
   //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
- });
-  
+  let isbn = req.params.isbn;
+  try {
+    if (books[isbn]) {
+      return res.status(200).json({ book: books[isbn] });
+    } else {
+      return res.status(404).json({ message: "Book not found" });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // Get book details based on author
-public_users.get('/author/:author',function (req, res) {
+public_users.get('/author/:author', function (req, res) {
   //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  let author = req.params.author.trim().replace(' ', '').toLocaleLowerCase();
+  // console.log(author)
+  try {
+    let booksByAuthor = Object.values(books).filter(book => book.author.trim().replace(' ', '').toLocaleLowerCase() === author);
+    if (booksByAuthor.length > 0) {
+      return res.status(200).json({ books: booksByAuthor });
+    } else {
+      return res.status(404).json({ message: "No books found by this author" });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
+public_users.get('/title/:title', function (req, res) {
   //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  let title = req.params.title.trim().replace(' ', '').toLocaleLowerCase();
+  try {
+    let booksByTitle = Object.values(books).filter(book => book.title.trim().replace(' ', '').toLocaleLowerCase() === title);
+    if (booksByTitle.length > 0) {
+      return res.status(200).json({ books: booksByTitle });
+    } else {
+      return res.status(404).json({ message: "No books found with this title" });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 //  Get book review
-public_users.get('/review/:isbn',function (req, res) {
+public_users.get('/review/:isbn', function (req, res) {
   //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  // 1: { "author": "Chinua Achebe", "title": "Things Fall Apart", "reviews": {"user": "Bob", "comment": "It's good book"} },
+  let isbn = req.params.isbn;
+  if (books[isbn]) {
+    let reviews = books[isbn].reviews;
+    if (Object.keys(reviews).length > 0) {
+      return res.status(200).json({ reviews });
+    } else {
+      return res.status(404).json({ message: "No reviews found for this book" });
+    }
+  } else {
+    return res.status(404).json({ message: "Book not found" });
+  }
 });
 
 module.exports.general = public_users;
